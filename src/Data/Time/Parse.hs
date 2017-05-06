@@ -66,6 +66,7 @@ allSupportedDateTimeFormats =
   zonedIso8601DateTimeFormats
     <> localIso8601DateTimeFormats
         <> localTimeFormats
+          <> [ "Nm", "Nh", "Nd" ] -- relative formats
 
 
 -- | Parses a given string using all supported formats,
@@ -85,9 +86,10 @@ parseUTCTimeTzT :: TimeZone -- ^ current time zone to assume when it's not a par
                 -> String -- ^ string to parse
                 -> Maybe UTCTime
 parseUTCTimeTzT currentTz currentTs s =
-  parseLocalTimeFormat
-    <|> parseLocalDateTimeFormat
-        <|> parseZonedDateTimeFormat
+  parseRelative
+    <|> parseLocalTimeFormat
+        <|> parseLocalDateTimeFormat
+            <|> parseZonedDateTimeFormat
 
   where parseZonedDateTimeFormat = do t <- parseAny zonedIso8601DateTimeFormats
                                       return $ zonedTimeToUTC t
@@ -101,3 +103,10 @@ parseUTCTimeTzT currentTz currentTs s =
                                   return $ zonedTimeToUTC $ ZonedTime (LocalTime currentDay (localTimeOfDay t)) currentTz
 
         parseAny fmts = listToMaybe $ catMaybes $ (\fmt -> parseTimeM False defaultTimeLocale fmt s) <$> fmts
+
+        -- relative to current time stamp (days,hours,minutes)
+        parseRelative = case reads s :: [(Int, String)]
+                          of [(n,"d")] -> Just $ addUTCTime (fromIntegral n * 24 * 60 * 60) currentTs
+                             [(n,"h")] -> Just $ addUTCTime (fromIntegral n *      60 * 60) currentTs
+                             [(n,"m")] -> Just $ addUTCTime (fromIntegral n *           60) currentTs
+                             _ -> Nothing

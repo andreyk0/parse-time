@@ -16,6 +16,7 @@ tests = [
       testCase "parse zoned time" test_parseZonedTime
     , testCase "parse local time" test_parseLocalTime
     , testCase "parse hms" test_parseHMS
+    , testCase "parse relative" test_parseRelative
     ]
   ]
 
@@ -40,6 +41,13 @@ test_parseLocalTime = do
 test_parseHMS = do
   tryParseTime "22:53:24"    "2017-05-06T02:53:24UTC"
   tryParseTime "22:53"       "2017-05-06T02:53:00UTC"
+
+
+test_parseRelative = do
+  tryParseTime "-10m"  "2017-05-06T02:54:05UTC"
+  tryParseTime "3m"    "2017-05-06T03:07:05UTC"
+  tryParseTime "-2h"   "2017-05-06T01:04:05UTC"
+  tryParseTime "-3d"   "2017-05-03T03:04:05UTC"
 
 
 tryParseTime :: String -> String -> IO ()
