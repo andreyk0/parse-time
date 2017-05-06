@@ -1,0 +1,52 @@
+name:                parse-time
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/andreyk0/parse-time#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Andrey Kartashov
+maintainer:          andrey.kartashov@google.com
+copyright:           Copyright: (c) 2016 Andrey Kartashov
+category:            Library
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+
+  exposed-modules:     Data.Time.Parse
+
+  build-depends:       base >= 4.7 && < 5
+                     , time
+
+  default-language:    Haskell2010
+
+  ghc-options:         -Wall
+
+
+test-suite test
+
+  type:                exitcode-stdio-1.0
+
+  hs-source-dirs:      test
+
+  main-is:             Test.hs
+
+  build-depends:       base >= 4.7 && < 5
+                     , HUnit
+                     , QuickCheck
+                     , parse-time
+                     , test-framework
+                     , test-framework-hunit
+                     , time
+
+  default-language:    Haskell2010
+
+  ghc-options:         -Wall -Wno-orphans -Wno-missing-signatures
+
+
+source-repository head
+  type:     git
+  location: https://github.com/andreyk0/parse-time
