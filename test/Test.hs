@@ -2,7 +2,6 @@
 
 module Main where
 
-import Data.Time.Format
 import Data.Time.LocalTime
 import Data.Time.Parse
 import Test.Framework (defaultMain, testGroup)
@@ -16,6 +15,7 @@ tests = [
     testGroup "Parse time" [
       testCase "parse zoned time" test_parseZonedTime
     , testCase "parse local time" test_parseLocalTime
+    , testCase "parse hms" test_parseHMS
     ]
   ]
 
@@ -37,12 +37,21 @@ test_parseLocalTime = do
   tryParseTime "2017-05-05"             "2017-05-05T04:00:00UTC"
 
 
+test_parseHMS = do
+  tryParseTime "22:53:24"    "2017-05-06T02:53:24UTC"
+  tryParseTime "22:53"       "2017-05-06T02:53:00UTC"
+
+
 tryParseTime :: String -> String -> IO ()
 tryParseTime arg expStr = do
   let tz = hoursToTimeZone (- 4)
 
-  expTm <- case parseTimeM False defaultTimeLocale iso8601DateTimeFormat expStr
+  testNow <- case parseIso8601DateTime "2017-05-06T03:04:05UTC"
+               of Just t -> return t
+                  Nothing -> error expStr
+
+  expTm <- case parseIso8601DateTime expStr
              of Just t -> return t
                 Nothing -> error expStr
 
-  parseUTCTime tz arg @?= Just expTm
+  parseUTCTimeTzT tz testNow arg @?= Just expTm
