@@ -17,6 +17,7 @@ tests = [
     , testCase "parse local time" test_parseLocalTime
     , testCase "parse hms" test_parseHMS
     , testCase "parse relative" test_parseRelative
+    , testCase "parse relative force past" test_parseRelativeForcePast
     ]
   ]
 
@@ -50,8 +51,19 @@ test_parseRelative = do
   tryParseTime "-3d"   "2017-05-03T03:04:05UTC"
 
 
+test_parseRelativeForcePast = do
+  tryParseTimeForceRelativePast True "-10m"  "2017-05-06T02:54:05UTC"
+  tryParseTimeForceRelativePast True "3m"    "2017-05-06T03:01:05UTC"
+  tryParseTimeForceRelativePast True "2h"    "2017-05-06T01:04:05UTC"
+  tryParseTimeForceRelativePast True "3d"    "2017-05-03T03:04:05UTC"
+
+
 tryParseTime :: String -> String -> IO ()
-tryParseTime arg expStr = do
+tryParseTime = tryParseTimeForceRelativePast False
+
+
+tryParseTimeForceRelativePast :: Bool -> String -> String -> IO ()
+tryParseTimeForceRelativePast forceRelPast arg expStr = do
   let tz = hoursToTimeZone (- 4)
 
   testNow <- case parseIso8601DateTime "2017-05-06T03:04:05UTC"
@@ -62,4 +74,4 @@ tryParseTime arg expStr = do
              of Just t -> return t
                 Nothing -> error expStr
 
-  parseUTCTimeTzT tz testNow arg @?= Just expTm
+  parseUTCTimeTzT forceRelPast tz testNow arg @?= Just expTm

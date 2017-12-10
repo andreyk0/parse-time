@@ -71,21 +71,23 @@ allSupportedDateTimeFormats =
 
 -- | Parses a given string using all supported formats,
 --   returns first match, if any.
-parseUTCTime :: String -- ^ string to parse
+parseUTCTime :: Bool -- ^ force relative time to always be in the past (e.g. '3h' would mean "3h ago")
+             -> String -- ^ string to parse
              -> IO (Maybe UTCTime)
-parseUTCTime s = do
+parseUTCTime forceRelPast s = do
   tz <- getCurrentTimeZone
   ts <- getCurrentTime
-  return $ parseUTCTimeTzT tz ts s
+  return $ parseUTCTimeTzT forceRelPast tz ts s
 
 
 -- | Parses a given string using all supported formats,
 --   returns first match, if any.
-parseUTCTimeTzT :: TimeZone -- ^ current time zone to assume when it's not a part of the input string
+parseUTCTimeTzT :: Bool -- ^ force relative time to always be in the past (e.g. '3h' would mean "3h ago")
+                -> TimeZone -- ^ current time zone to assume when it's not a part of the input string
                 -> UTCTime -- ^ current time to fill in date from when only H:M:S part is given
                 -> String -- ^ string to parse
                 -> Maybe UTCTime
-parseUTCTimeTzT currentTz currentTs s =
+parseUTCTimeTzT forceRelPast currentTz currentTs s =
   parseRelative
     <|> parseLocalTimeFormat
         <|> parseLocalDateTimeFormat
@@ -104,9 +106,14 @@ parseUTCTimeTzT currentTz currentTs s =
 
         parseAny fmts = listToMaybe $ catMaybes $ (\fmt -> parseTimeM False defaultTimeLocale fmt s) <$> fmts
 
+        -- flips positive relative time to always mean "in the past"
+        relPast n = fromIntegral $ if forceRelPast
+                                   then negate $ abs n
+                                   else n
+
         -- relative to current time stamp (days,hours,minutes)
         parseRelative = case reads s :: [(Int, String)]
-                          of [(n,"d")] -> Just $ addUTCTime (fromIntegral n * 24 * 60 * 60) currentTs
-                             [(n,"h")] -> Just $ addUTCTime (fromIntegral n *      60 * 60) currentTs
-                             [(n,"m")] -> Just $ addUTCTime (fromIntegral n *           60) currentTs
+                          of [(n,"d")] -> Just $ addUTCTime (relPast n * 24 * 60 * 60) currentTs
+                             [(n,"h")] -> Just $ addUTCTime (relPast n *      60 * 60) currentTs
+                             [(n,"m")] -> Just $ addUTCTime (relPast n *           60) currentTs
                              _ -> Nothing
